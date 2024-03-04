@@ -5,7 +5,7 @@ import com.oxingaxin.todograss.common.dto.TokenInfo
 import com.oxingaxin.todograss.common.dto.TokenType
 import com.oxingaxin.todograss.common.exception.AlreadyExistsException
 import com.oxingaxin.todograss.common.exception.NotFoundException
-import com.oxingaxin.todograss.member.domain.dto.MemberDtoRequest
+import com.oxingaxin.todograss.member.domain.dto.MemberRequest
 import com.oxingaxin.todograss.member.domain.dto.SigninDto
 import com.oxingaxin.todograss.member.domain.entity.MemberRefreshToken
 import com.oxingaxin.todograss.member.domain.entity.MemberRole
@@ -29,14 +29,14 @@ class MemberService(
     private val jwtManager: JwtManager
 ) {
 
-    fun signup(memberDtoRequest: MemberDtoRequest) {
-        if (memberRepository.existsByEmail(memberDtoRequest.email))
-            throw AlreadyExistsException("member", "email", memberDtoRequest.email)
+    fun signup(memberRequest: MemberRequest) {
+        if (memberRepository.existsByEmail(memberRequest.email))
+            throw AlreadyExistsException("member", "email", memberRequest.email)
 
-        if (memberRepository.existsByNickname(memberDtoRequest.nickname))
-            throw AlreadyExistsException("member", "nickname", memberDtoRequest.nickname)
+        if (memberRepository.existsByNickname(memberRequest.nickname))
+            throw AlreadyExistsException("member", "nickname", memberRequest.nickname)
 
-        val member = memberDtoRequest.toEntity()
+        val member = memberRequest.toEntity()
         memberRepository.save(member)
 
         val memberRole = MemberRole(null, Role.MEMBER, member)

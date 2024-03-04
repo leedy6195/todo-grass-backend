@@ -7,7 +7,7 @@ import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
 
 
-data class MemberDtoRequest(
+data class MemberRequest(
     var id: Long?,
 
     @field:NotBlank

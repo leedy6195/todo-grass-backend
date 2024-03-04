@@ -5,16 +5,13 @@ import com.oxingaxin.todograss.common.dto.BaseResponse
 import com.oxingaxin.todograss.common.dto.CustomUser
 import com.oxingaxin.todograss.common.dto.TokenInfo
 import com.oxingaxin.todograss.common.dto.TokenType
-import com.oxingaxin.todograss.member.domain.dto.MemberDtoRequest
+import com.oxingaxin.todograss.member.domain.dto.MemberRequest
 import com.oxingaxin.todograss.member.domain.dto.SigninDto
 import com.oxingaxin.todograss.member.service.MemberService
 import jakarta.servlet.http.Cookie
-import jakarta.servlet.http.HttpServletRequest
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.security.core.context.SecurityContextHolder
-import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.*
-import kotlin.math.sign
 
 @RestController
 @RequestMapping("/api/members")
@@ -24,9 +21,9 @@ class MemberController(
 ) {
     @PostMapping("/signup")
     fun signup(
-        @RequestBody memberDtoRequest: MemberDtoRequest
+        @RequestBody memberRequest: MemberRequest
     ): BaseResponse<Unit> {
-        memberService.signup(memberDtoRequest)
+        memberService.signup(memberRequest)
 
         return BaseResponse.created(null)
     }
