@@ -18,10 +18,10 @@ class TodoItem(
     val member: Member,
 
     @Column(length = 255)
-    val title: String,
+    var title: String,
 
     @Column(length = 1023)
-    val description: String,
+    var description: String,
 
     private var createdAt: LocalDateTime? = null
 ) {

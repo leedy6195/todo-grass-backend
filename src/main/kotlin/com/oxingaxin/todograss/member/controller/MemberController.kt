@@ -3,13 +3,14 @@ package com.oxingaxin.todograss.member.controller
 import com.oxingaxin.todograss.common.authority.JwtManager
 import com.oxingaxin.todograss.common.dto.BaseResponse
 import com.oxingaxin.todograss.common.dto.CustomUser
-import com.oxingaxin.todograss.common.dto.TokenInfo
 import com.oxingaxin.todograss.common.dto.TokenType
 import com.oxingaxin.todograss.member.domain.dto.MemberRequest
-import com.oxingaxin.todograss.member.domain.dto.SigninDto
+import com.oxingaxin.todograss.member.domain.dto.SigninRequest
+import com.oxingaxin.todograss.member.domain.dto.PublicMemberInfo
 import com.oxingaxin.todograss.member.service.MemberService
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
 
@@ -30,29 +31,39 @@ class MemberController(
 
     @PostMapping("/signin")
     fun signin(
-        @RequestBody signinDto: SigninDto,
+        @RequestBody signinRequest: SigninRequest,
         response: HttpServletResponse
-    ): BaseResponse<TokenInfo> {
-        val tokenInfo = memberService.signin(signinDto)
+    ): BaseResponse<PublicMemberInfo> {
+        val tokenInfo = memberService.signin(signinRequest)
 
         val cookie = Cookie(TokenType.toCookieName(TokenType.REFRESH), tokenInfo.token)
             .apply {
                 isHttpOnly = true
                 path = "/"
-                maxAge = 60 * 10
+                maxAge = 60 * 30
             }
 
         response.addCookie(cookie)
-        return BaseResponse.ok(tokenInfo)
+
+        val userId = (SecurityContextHolder.getContext().authentication.principal as CustomUser).userId
+
+        println("login userId: $userId")
+        val memberInfo = memberService.getMemberInfo(userId)
+        return BaseResponse.ok(memberInfo)
     }
 
     @PostMapping("/signout")
     fun signout(
         @CookieValue(value="refresh_token", required = false) refreshToken: String?,
-        response: HttpServletResponse
+        response: HttpServletResponse,
+        authentication: Authentication
     ): BaseResponse<Unit> {
         val userId = (SecurityContextHolder.getContext().authentication.principal as CustomUser).userId
+        println("logout userId: $userId")
         memberService.signout(userId)
+
+        SecurityContextHolder.clearContext()
+
         val signoutCookie = Cookie(TokenType.toCookieName(TokenType.REFRESH), "").apply {
             isHttpOnly = true
             path = "/"
@@ -78,7 +89,7 @@ class MemberController(
                             .apply {
                                 isHttpOnly = true
                                 path = "/"
-                                maxAge = 60 * 3
+                                maxAge = 60 * 10
                             }
                         response.addCookie(cookie)
                     }

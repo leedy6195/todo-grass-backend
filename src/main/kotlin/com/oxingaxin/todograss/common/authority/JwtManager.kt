@@ -12,13 +12,12 @@ import org.slf4j.LoggerFactory
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.core.Authentication
-import org.springframework.security.core.GrantedAuthority
 import org.springframework.security.core.authority.SimpleGrantedAuthority
 import org.springframework.security.core.userdetails.UserDetails
 import org.springframework.stereotype.Component
 
-const val ACCESS_TOKEN_EXP_MILLIS = 1000L * 60 * 3
-const val REFRESH_TOKEN_EXP_MILLIS = 1000L * 60 * 10
+const val ACCESS_TOKEN_EXP_MILLIS = 1000L * 60 * 10
+const val REFRESH_TOKEN_EXP_MILLIS = 1000L * 60 * 30
 
 @Component
 class JwtManager {
@@ -89,6 +88,6 @@ class JwtManager {
         val claims: Claims = getClaims(token)
         val expiration = claims.expiration.time
         val now = Date().time
-        return expiration - now < 1000 * 60 * 1
+        return expiration - now < 1000 * 60 * 3
     }
 }

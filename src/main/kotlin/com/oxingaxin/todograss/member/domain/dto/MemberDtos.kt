@@ -46,7 +46,7 @@ data class MemberRequest(
     )
 }
 
-data class SigninDto(
+data class SigninRequest(
     @field:NotBlank
     @JsonProperty("email")
     private val _email: String?,
@@ -62,3 +62,8 @@ data class SigninDto(
     val password: String
         get() = _password!!
 }
+
+data class PublicMemberInfo(
+    val email: String,
+    val nickname: String
+)

@@ -15,7 +15,15 @@ import org.springframework.web.bind.annotation.*
 class TodoController(
     private val todoService: TodoService
 ) {
-    @GetMapping("/{nickname}")
+    @GetMapping("/{id}")
+    fun getTodo(
+        @PathVariable id: Long
+    ): BaseResponse<TodoItemResponse> {
+        val todo = todoService.getTodo(id)
+
+        return BaseResponse.fetched(todo)
+    }
+    @GetMapping("/nicknames/{nickname}")
     fun getTodos(@PathVariable nickname: String): BaseResponse<List<TodoItemResponse>> {
 
         //val memberId = (SecurityContextHolder.getContext().authentication.principal as CustomUser).userId
@@ -32,5 +40,18 @@ class TodoController(
         todoService.addTodo(todoItemRequest)
 
         return BaseResponse.created(Unit)
+    }
+
+    @PutMapping("/{id}")
+    fun updateTodo(
+        @PathVariable id: Long,
+        @RequestBody @Valid todoItemRequest: TodoItemRequest
+    ): BaseResponse<Unit> {
+        val memberId = (SecurityContextHolder.getContext().authentication.principal as CustomUser).userId
+        todoItemRequest.memberId = memberId
+
+        todoService.updateTodo(id, todoItemRequest)
+
+        return BaseResponse.ok(Unit)
     }
 }

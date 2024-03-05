@@ -6,7 +6,8 @@ import com.oxingaxin.todograss.common.dto.TokenType
 import com.oxingaxin.todograss.common.exception.AlreadyExistsException
 import com.oxingaxin.todograss.common.exception.NotFoundException
 import com.oxingaxin.todograss.member.domain.dto.MemberRequest
-import com.oxingaxin.todograss.member.domain.dto.SigninDto
+import com.oxingaxin.todograss.member.domain.dto.SigninRequest
+import com.oxingaxin.todograss.member.domain.dto.PublicMemberInfo
 import com.oxingaxin.todograss.member.domain.entity.MemberRefreshToken
 import com.oxingaxin.todograss.member.domain.entity.MemberRole
 import com.oxingaxin.todograss.member.domain.entity.Role
@@ -44,12 +45,13 @@ class MemberService(
 
     }
 
-    fun signin(signinDto: SigninDto): TokenInfo {
-        val authenticationToken = UsernamePasswordAuthenticationToken(signinDto.email, signinDto.password)
+    fun signin(signinRequest: SigninRequest): TokenInfo {
+        val authenticationToken = UsernamePasswordAuthenticationToken(signinRequest.email, signinRequest.password)
         val authentication = authenticationManagerBuilder.`object`.authenticate(authenticationToken)
 
-        val member = memberRepository.findByEmail(signinDto.email)!!
+        val member = memberRepository.findByEmail(signinRequest.email)!!
         val refreshToken = memberRefreshTokenRepository.findByMemberId(member.id!!)
+
         val newRefreshToken = jwtManager.generateToken(authentication, TokenType.REFRESH)
 
         if (refreshToken == null) {
@@ -61,12 +63,17 @@ class MemberService(
         return newRefreshToken
     }
 
+    fun getMemberInfo(memberId: Long): PublicMemberInfo {
+        return memberRepository.findById(memberId).orElseThrow { NotFoundException("member") }.let {
+            PublicMemberInfo(it.email, it.nickname!!)
+        }
+    }
+
     fun signout(memberId: Long) {
         val refreshToken = memberRefreshTokenRepository.findByMemberId(memberId)
             ?: throw NotFoundException("refreshToken", "memberId", memberId.toString())
 
         memberRefreshTokenRepository.delete(refreshToken)
     }
-
 
 }
