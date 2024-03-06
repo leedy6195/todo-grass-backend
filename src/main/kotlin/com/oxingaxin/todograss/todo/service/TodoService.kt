@@ -54,4 +54,7 @@ class TodoService(
             TodoItemResponse(todo.id!!, todo.title, todo.description)
         }
     }
+    fun deleteTodo(id: Long) {
+        todoRepository.deleteById(id)
+    }
 }

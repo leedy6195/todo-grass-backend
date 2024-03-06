@@ -54,4 +54,12 @@ class TodoController(
 
         return BaseResponse.ok(Unit)
     }
+
+    @DeleteMapping("/{id}")
+    fun deleteTodo(
+        @PathVariable id: Long
+    ) {
+
+        todoService.deleteTodo(id)
+    }
 }
