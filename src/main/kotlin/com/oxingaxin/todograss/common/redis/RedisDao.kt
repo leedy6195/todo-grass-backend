@@ -11,7 +11,7 @@ class RedisDao(
 ) {
 
     fun setValue(key: String, data: String) {
-        val ops = redisTemplate.opsForValue();
+        val ops = redisTemplate.opsForValue()
         ops.set(key, data)
     }
 

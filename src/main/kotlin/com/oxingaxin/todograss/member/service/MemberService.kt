@@ -2,33 +2,37 @@ package com.oxingaxin.todograss.member.service
 
 import com.oxingaxin.todograss.common.auth.JwtManager
 import com.oxingaxin.todograss.common.dto.TokenInfo
-import com.oxingaxin.todograss.common.dto.TokenType
 import com.oxingaxin.todograss.common.exception.AlreadyExistsException
 import com.oxingaxin.todograss.common.exception.NotFoundException
+import com.oxingaxin.todograss.common.redis.RedisDao
 import com.oxingaxin.todograss.member.domain.dto.MemberRequest
 import com.oxingaxin.todograss.member.domain.dto.SigninRequest
 import com.oxingaxin.todograss.member.domain.dto.PublicMemberInfo
-import com.oxingaxin.todograss.member.domain.entity.MemberRefreshToken
 import com.oxingaxin.todograss.member.domain.entity.MemberRole
 import com.oxingaxin.todograss.member.domain.entity.Role
-import com.oxingaxin.todograss.member.repository.MemberRefreshTokenRepository
 import com.oxingaxin.todograss.member.repository.MemberRepository
 import com.oxingaxin.todograss.member.repository.MemberRoleRepository
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder
 
 import org.springframework.stereotype.Service
 import org.springframework.transaction.annotation.Transactional
+import java.time.Duration
 
 @Transactional
 @Service
 class MemberService(
     private val memberRepository: MemberRepository,
     private val memberRoleRepository: MemberRoleRepository,
-    private val memberRefreshTokenRepository: MemberRefreshTokenRepository,
     private val authenticationManagerBuilder: AuthenticationManagerBuilder,
-    private val jwtManager: JwtManager
+    private val jwtManager: JwtManager,
+    private val redisDao: RedisDao
 ) {
+
+    @Value("\${jwt.expiration-millis.refresh-token}")
+    var refreshTokenExpMillis: Long = 0L
+
 
     fun signup(memberRequest: MemberRequest) {
         if (memberRepository.existsByEmail(memberRequest.email))
@@ -49,18 +53,13 @@ class MemberService(
         val authenticationToken = UsernamePasswordAuthenticationToken(signinRequest.email, signinRequest.password)
         val authentication = authenticationManagerBuilder.`object`.authenticate(authenticationToken)
 
+        val accessToken = jwtManager.generateAccessToken(authentication)
+        val refreshToken = jwtManager.generateRefreshToken(authentication)
+
         val member = memberRepository.findByEmail(signinRequest.email)!!
-        val refreshToken = memberRefreshTokenRepository.findByMemberId(member.id!!)
+        redisDao.setValue(member.id.toString(), refreshToken.token, Duration.ofMillis(refreshTokenExpMillis))
 
-        val newRefreshToken = jwtManager.generateToken(authentication, TokenType.REFRESH)
-
-        if (refreshToken == null) {
-            memberRefreshTokenRepository.save(MemberRefreshToken(member = member, refreshToken = newRefreshToken.token))
-        } else {
-            refreshToken.updateRefreshToken(newRefreshToken.token)
-        }
-
-        return newRefreshToken
+        return accessToken
     }
 
     fun getMemberInfo(memberId: Long): PublicMemberInfo {
@@ -70,10 +69,8 @@ class MemberService(
     }
 
     fun signout(memberId: Long) {
-        val refreshToken = memberRefreshTokenRepository.findByMemberId(memberId)
-            ?: throw NotFoundException("refreshToken", "memberId", memberId.toString())
-
-        memberRefreshTokenRepository.delete(refreshToken)
+        if (redisDao.getValue(memberId.toString()) == null) { throw NotFoundException("refreshToken") }
+        redisDao.deleteValue(memberId.toString())
     }
 
 }

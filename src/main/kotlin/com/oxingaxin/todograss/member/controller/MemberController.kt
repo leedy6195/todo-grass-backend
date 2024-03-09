@@ -10,6 +10,7 @@ import com.oxingaxin.todograss.member.domain.dto.PublicMemberInfo
 import com.oxingaxin.todograss.member.service.MemberService
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
+import org.springframework.beans.factory.annotation.Value
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
@@ -20,6 +21,10 @@ class MemberController(
     private val memberService: MemberService,
     private val jwtManager: JwtManager
 ) {
+
+    @Value("\${jwt.expiration-millis.access-token}")
+    var accessTokenExpMillis: Long = 0L
+
     @PostMapping("/signup")
     fun signup(
         @RequestBody memberRequest: MemberRequest
@@ -35,48 +40,27 @@ class MemberController(
         response: HttpServletResponse
     ): BaseResponse<PublicMemberInfo> {
         val tokenInfo = memberService.signin(signinRequest)
+        val accessTokenCookie = createAccessTokenCookie(tokenInfo.token)
+        response.addCookie(accessTokenCookie)
 
-        val cookie = Cookie(TokenType.toCookieName(TokenType.REFRESH), tokenInfo.token)
-            .apply {
-                isHttpOnly = true
-                path = "/"
-                maxAge = 60 * 30
-            }
-        
-        response.addCookie(cookie)
         val userId = jwtManager.getClaims(tokenInfo.token)["userId"].toString().toLong()
-        //val userId = (SecurityContextHolder.getContext().authentication.principal as CustomUser).userId
-
-        println("login userId: $userId")
         val memberInfo = memberService.getMemberInfo(userId)
+
         return BaseResponse.ok(memberInfo)
     }
 
     @PostMapping("/signout")
     fun signout(
-        @CookieValue(value="refresh_token", required = false) refreshToken: String?,
         response: HttpServletResponse,
         authentication: Authentication
     ): BaseResponse<Unit> {
         val userId = (SecurityContextHolder.getContext().authentication.principal as CustomUser).userId
-        println("logout userId: $userId")
         memberService.signout(userId)
 
         SecurityContextHolder.clearContext()
 
-        val signoutRefreshCookie = Cookie(TokenType.toCookieName(TokenType.REFRESH), "").apply {
-            isHttpOnly = true
-            path = "/"
-            maxAge = 0
-        }
-
-        val signoutAccessCookie = Cookie(TokenType.toCookieName(TokenType.ACCESS), "").apply {
-            isHttpOnly = true
-            path = "/"
-            maxAge = 0
-        }
-        response.addCookie(signoutRefreshCookie)
-        response.addCookie(signoutAccessCookie)
+        val emptyCookie = createEmptyCookie()
+        response.addCookie(emptyCookie)
 
         return BaseResponse.ok(Unit)
     }
@@ -84,26 +68,28 @@ class MemberController(
     @GetMapping("/check")
     fun check(
         @CookieValue(value = "access_token", required = false) accessToken: String?,
-        @CookieValue(value = "refresh_token", required = false) refreshToken: String?,
         response: HttpServletResponse
     ): BaseResponse<Boolean> {
-        if (refreshToken != null && jwtManager.validateToken(refreshToken)) {
 
-            if (accessToken == null || jwtManager.doesTokenExpireSoon(accessToken)) {
-                //generate new access token
-                jwtManager.generateToken(jwtManager.getAuthentication(refreshToken), TokenType.ACCESS)
-                    .let {
-                        val cookie = Cookie(TokenType.toCookieName(TokenType.ACCESS), it.token)
-                            .apply {
-                                isHttpOnly = true
-                                path = "/"
-                                maxAge = 60 * 10
-                            }
-                        response.addCookie(cookie)
-                    }
-            }
+        if (accessToken != null && jwtManager.validateToken(accessToken)) {
             return BaseResponse.ok(true)
         }
         return BaseResponse.ok(false)
+    }
+
+    private fun createAccessTokenCookie(token: String): Cookie {
+        return Cookie(TokenType.toCookieName(TokenType.ACCESS), token).apply {
+            isHttpOnly = true
+            path = "/"
+            maxAge = (accessTokenExpMillis / 1000).toInt()
+        }
+    }
+
+    private fun createEmptyCookie(): Cookie {
+        return Cookie(TokenType.toCookieName(TokenType.ACCESS), "").apply {
+            isHttpOnly = true
+            path = "/"
+            maxAge = 0
+        }
     }
 }

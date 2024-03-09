@@ -1,5 +1,6 @@
 package com.oxingaxin.todograss.common.auth
 
+import com.oxingaxin.todograss.common.redis.RedisDao
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
 import org.springframework.security.config.annotation.web.builders.HttpSecurity
@@ -13,7 +14,8 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @Configuration
 @EnableWebSecurity
 class SecurityConfig(
-    private val jwtManager: JwtManager
+    private val jwtManager: JwtManager,
+    private val redisDao: RedisDao
 ) {
     @Bean
     fun filterChain(http: HttpSecurity): SecurityFilterChain {
@@ -33,7 +35,7 @@ class SecurityConfig(
             }
 
             .addFilterBefore(
-                JwtRequestFilter(jwtManager),
+                JwtRequestFilter(jwtManager, redisDao),
                 UsernamePasswordAuthenticationFilter::class.java
             )
 

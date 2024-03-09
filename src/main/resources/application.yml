@@ -26,3 +26,8 @@ logging:
 
 jwt:
   secret: mBKO3aiV6uNZ6R96usOrSvdSGrmMwPsRaF4hT4YSdSb
+  expiration-millis:
+    access-token: 60000 # 1000 * 60
+    refresh-token: 86400000 # 1000 * 60 * 60 * 24
+
+
