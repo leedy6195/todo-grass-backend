@@ -1,6 +1,6 @@
 package com.oxingaxin.todograss.member.controller
 
-import com.oxingaxin.todograss.common.authority.JwtManager
+import com.oxingaxin.todograss.common.auth.JwtManager
 import com.oxingaxin.todograss.common.dto.BaseResponse
 import com.oxingaxin.todograss.common.dto.CustomUser
 import com.oxingaxin.todograss.common.dto.TokenType
@@ -42,10 +42,10 @@ class MemberController(
                 path = "/"
                 maxAge = 60 * 30
             }
-
+        
         response.addCookie(cookie)
-
-        val userId = (SecurityContextHolder.getContext().authentication.principal as CustomUser).userId
+        val userId = jwtManager.getClaims(tokenInfo.token)["userId"].toString().toLong()
+        //val userId = (SecurityContextHolder.getContext().authentication.principal as CustomUser).userId
 
         println("login userId: $userId")
         val memberInfo = memberService.getMemberInfo(userId)
@@ -64,12 +64,20 @@ class MemberController(
 
         SecurityContextHolder.clearContext()
 
-        val signoutCookie = Cookie(TokenType.toCookieName(TokenType.REFRESH), "").apply {
+        val signoutRefreshCookie = Cookie(TokenType.toCookieName(TokenType.REFRESH), "").apply {
             isHttpOnly = true
             path = "/"
             maxAge = 0
         }
-        response.addCookie(signoutCookie)
+
+        val signoutAccessCookie = Cookie(TokenType.toCookieName(TokenType.ACCESS), "").apply {
+            isHttpOnly = true
+            path = "/"
+            maxAge = 0
+        }
+        response.addCookie(signoutRefreshCookie)
+        response.addCookie(signoutAccessCookie)
+
         return BaseResponse.ok(Unit)
     }
 

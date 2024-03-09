@@ -36,6 +36,7 @@ dependencies {
 	implementation("io.jsonwebtoken:jjwt-jackson:0.11.5")
 	implementation("javax.xml.bind:jaxb-api:2.3.1")
 	implementation("org.springframework.boot:spring-boot-starter-validation")
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 
 	compileOnly("org.projectlombok:lombok")
 	runtimeOnly("org.mariadb.jdbc:mariadb-java-client")

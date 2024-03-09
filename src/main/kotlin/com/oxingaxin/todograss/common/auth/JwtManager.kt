@@ -1,4 +1,4 @@
-package com.oxingaxin.todograss.common.authority
+package com.oxingaxin.todograss.common.auth
 
 import com.oxingaxin.todograss.common.dto.CustomUser
 import com.oxingaxin.todograss.common.dto.TokenInfo
@@ -60,7 +60,7 @@ class JwtManager {
         return UsernamePasswordAuthenticationToken(principal, "", authorities)
     }
 
-    private fun getClaims(token: String): Claims =
+    fun getClaims(token: String): Claims =
         Jwts.parserBuilder()
             .setSigningKey(key)
             .build()

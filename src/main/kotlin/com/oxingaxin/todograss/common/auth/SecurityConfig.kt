@@ -1,4 +1,4 @@
-package com.oxingaxin.todograss.common.authority
+package com.oxingaxin.todograss.common.auth
 
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -31,6 +31,7 @@ class SecurityConfig(
                     .requestMatchers("/api/members/**").hasRole("MEMBER")
                     .anyRequest().authenticated()
             }
+
             .addFilterBefore(
                 JwtRequestFilter(jwtManager),
                 UsernamePasswordAuthenticationFilter::class.java

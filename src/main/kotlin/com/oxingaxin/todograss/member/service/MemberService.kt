@@ -1,6 +1,6 @@
 package com.oxingaxin.todograss.member.service
 
-import com.oxingaxin.todograss.common.authority.JwtManager
+import com.oxingaxin.todograss.common.auth.JwtManager
 import com.oxingaxin.todograss.common.dto.TokenInfo
 import com.oxingaxin.todograss.common.dto.TokenType
 import com.oxingaxin.todograss.common.exception.AlreadyExistsException
