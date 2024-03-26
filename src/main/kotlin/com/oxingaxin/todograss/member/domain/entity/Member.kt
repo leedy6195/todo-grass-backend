@@ -19,7 +19,7 @@ class Member(
     @Column(unique = true, length = 20)
     val nickname: String?,
 
-    private var profileImgPath: String? = null,
+    var profileImgPath: String? = null,
 
     private var createdAt: LocalDateTime? = null,
 ) {

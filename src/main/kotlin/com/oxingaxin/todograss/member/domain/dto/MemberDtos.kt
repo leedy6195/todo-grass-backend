@@ -5,6 +5,7 @@ import com.oxingaxin.todograss.member.domain.entity.Member
 import jakarta.validation.constraints.Email
 import jakarta.validation.constraints.NotBlank
 import jakarta.validation.constraints.Pattern
+import java.io.Serializable
 
 
 data class MemberRequest(
@@ -34,7 +35,7 @@ data class MemberRequest(
 ) {
     val email: String
         get() = _email!!
-    val password: String
+    private val password: String
         get() = _password!!
     val nickname: String
         get() = _nickname!!
@@ -45,6 +46,10 @@ data class MemberRequest(
         nickname = nickname
     )
 }
+
+data class MemberUpdateRequest(
+    val profileImage: ByteArray
+) : Serializable
 
 data class SigninRequest(
     @field:NotBlank
@@ -65,5 +70,6 @@ data class SigninRequest(
 
 data class PublicMemberInfo(
     val email: String,
-    val nickname: String
+    val nickname: String,
+    val profileImgPath: String
 )

@@ -5,15 +5,18 @@ import com.oxingaxin.todograss.common.dto.BaseResponse
 import com.oxingaxin.todograss.common.dto.CustomUser
 import com.oxingaxin.todograss.common.dto.TokenType
 import com.oxingaxin.todograss.member.domain.dto.MemberRequest
+import com.oxingaxin.todograss.member.domain.dto.MemberUpdateRequest
 import com.oxingaxin.todograss.member.domain.dto.SigninRequest
 import com.oxingaxin.todograss.member.domain.dto.PublicMemberInfo
 import com.oxingaxin.todograss.member.service.MemberService
 import jakarta.servlet.http.Cookie
 import jakarta.servlet.http.HttpServletResponse
 import org.springframework.beans.factory.annotation.Value
+import org.springframework.http.MediaType
 import org.springframework.security.core.Authentication
 import org.springframework.security.core.context.SecurityContextHolder
 import org.springframework.web.bind.annotation.*
+import org.springframework.web.multipart.MultipartFile
 
 @RestController
 @RequestMapping("/api/members")
@@ -24,6 +27,29 @@ class MemberController(
 
     @Value("\${jwt.expiration-millis.access-token}")
     var accessTokenExpMillis: Long = 0L
+
+
+    @GetMapping("/nicknames/{nickname}")
+    fun getMemberInfoByNickname(@PathVariable nickname: String): BaseResponse<PublicMemberInfo> {
+        val memberInfo = memberService.getMemberInfoByNickname(nickname)
+        return BaseResponse.fetched(memberInfo)
+    }
+
+    @GetMapping("/profile")
+    fun getProfile(): BaseResponse<PublicMemberInfo> {
+        val userId = (SecurityContextHolder.getContext().authentication.principal as CustomUser).userId
+        val memberInfo = memberService.getMemberInfo(userId)
+        return BaseResponse.fetched(memberInfo)
+    }
+
+    @PutMapping("/profile", consumes = [MediaType.MULTIPART_FORM_DATA_VALUE])
+    fun updateProfile(@RequestPart profileImage: MultipartFile): BaseResponse<Unit> {
+        val userId = (SecurityContextHolder.getContext().authentication.principal as CustomUser).userId
+        val memberUpdateRequest = MemberUpdateRequest(profileImage.bytes)
+        memberService.updateMember(userId, memberUpdateRequest)
+        return BaseResponse.updated(Unit)
+    }
+
 
     @PostMapping("/signup")
     fun signup(
@@ -64,6 +90,8 @@ class MemberController(
 
         return BaseResponse.ok(Unit)
     }
+
+
 
     @GetMapping("/check")
     fun check(

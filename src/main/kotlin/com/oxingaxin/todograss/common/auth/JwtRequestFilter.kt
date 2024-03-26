@@ -27,12 +27,14 @@ class JwtRequestFilter(
         val token = resolveToken(request)
         try {
             if (token != null && jwtManager.validateToken(token)) {
+
                 val authentication = jwtManager.getAuthentication(token)
                 SecurityContextHolder.getContext().authentication = authentication
+
             }
             /* access token expires without signout */
             else if (SecurityContextHolder.getContext()?.authentication != null &&
-                redisDao.getValue((SecurityContextHolder.getContext().authentication.principal as CustomUser).userId.toString()) != null
+                redisDao.getValue((SecurityContextHolder.getContext().authentication?.principal as CustomUser).userId.toString()) != null
             ) {
                 refreshAccessToken(response)
             }

@@ -22,12 +22,16 @@ logging:
     console: "[%d{HH:mm:ss.SSS}][%-5level][%logger.%method:line%line] - %msg%n"
   level:
     root: DEBUG
-    org.springframework.security: DEBUG
 
 jwt:
   secret: mBKO3aiV6uNZ6R96usOrSvdSGrmMwPsRaF4hT4YSdSb
   expiration-millis:
-    access-token: 60000 # 1000 * 60
+    access-token: 3600000 # 1000 * 60 * 60
     refresh-token: 86400000 # 1000 * 60 * 60 * 24
 
-
+aws:
+  access-key: AKIA3OMDE5J6CUA33ZV2
+  secret-key: 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
+  s3:
+    bucket-name: todo-grass-bucket
+    region: ap-northeast-2

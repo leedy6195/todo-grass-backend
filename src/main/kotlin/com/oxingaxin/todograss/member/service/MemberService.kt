@@ -1,11 +1,13 @@
 package com.oxingaxin.todograss.member.service
 
 import com.oxingaxin.todograss.common.auth.JwtManager
+import com.oxingaxin.todograss.common.aws.S3Service
 import com.oxingaxin.todograss.common.dto.TokenInfo
 import com.oxingaxin.todograss.common.exception.AlreadyExistsException
 import com.oxingaxin.todograss.common.exception.NotFoundException
 import com.oxingaxin.todograss.common.redis.RedisDao
 import com.oxingaxin.todograss.member.domain.dto.MemberRequest
+import com.oxingaxin.todograss.member.domain.dto.MemberUpdateRequest
 import com.oxingaxin.todograss.member.domain.dto.SigninRequest
 import com.oxingaxin.todograss.member.domain.dto.PublicMemberInfo
 import com.oxingaxin.todograss.member.domain.entity.MemberRole
@@ -27,7 +29,8 @@ class MemberService(
     private val memberRoleRepository: MemberRoleRepository,
     private val authenticationManagerBuilder: AuthenticationManagerBuilder,
     private val jwtManager: JwtManager,
-    private val redisDao: RedisDao
+    private val redisDao: RedisDao,
+    private val s3Service: S3Service
 ) {
 
     @Value("\${jwt.expiration-millis.refresh-token}")
@@ -64,13 +67,26 @@ class MemberService(
 
     fun getMemberInfo(memberId: Long): PublicMemberInfo {
         return memberRepository.findById(memberId).orElseThrow { NotFoundException("member") }.let {
-            PublicMemberInfo(it.email, it.nickname!!)
+            PublicMemberInfo(it.email, it.nickname!!, it.profileImgPath!!)
+        }
+    }
+
+    fun getMemberInfoByNickname(nickname: String) : PublicMemberInfo {
+        return memberRepository.findByNickname(nickname).orElseThrow { NotFoundException("member") }.let {
+            PublicMemberInfo(it.email, it.nickname!!, it.profileImgPath!!)
         }
     }
 
     fun signout(memberId: Long) {
         if (redisDao.getValue(memberId.toString()) == null) { throw NotFoundException("refreshToken") }
         redisDao.deleteValue(memberId.toString())
+    }
+
+    fun updateMember(memberId: Long, memberUpdateRequest: MemberUpdateRequest) {
+        val member = memberRepository.findById(memberId).orElseThrow{ NotFoundException("member") }
+        val nickname = member.nickname!!
+        s3Service.uploadFile(memberUpdateRequest.profileImage, nickname)
+        member.profileImgPath = "/images/$nickname"
     }
 
 }
