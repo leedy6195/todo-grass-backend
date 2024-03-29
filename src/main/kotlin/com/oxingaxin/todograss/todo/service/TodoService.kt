@@ -23,6 +23,7 @@ class TodoService(
             .member(member)
             .title(todoItemRequest.title)
             .description(todoItemRequest.description)
+            .weight(todoItemRequest.weight)
             .build()
 
         todoRepository.save(todoItem)
@@ -42,7 +43,7 @@ class TodoService(
         val todo = todoRepository.findById(id)
             .orElseThrow { NotFoundException("todo") }
 
-        return TodoItemResponse(todo.id!!, todo.title, todo.description)
+        return TodoItemResponse(todo.id!!, todo.title, todo.description, todo.weight)
     }
 
     fun getTodos(nickname: String): List<TodoItemResponse> {
@@ -51,7 +52,7 @@ class TodoService(
 
         val todos = todoRepository.findAllByMemberIdOrderByIdDesc(member.id!!)
         return todos.map { todo ->
-            TodoItemResponse(todo.id!!, todo.title, todo.description)
+            TodoItemResponse(todo.id!!, todo.title, todo.description, todo.weight)
         }
     }
     fun deleteTodo(id: Long) {
